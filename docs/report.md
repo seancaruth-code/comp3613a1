@@ -320,6 +320,9 @@ at the same time as Saved on the saved-only page.
 The sidebar icon ligatures were removed from the tab links because they could
 render as duplicate words when the external icon font was unavailable. Each
 sidebar tab now displays only its text label.
+Authentication was updated for per-tab testing: each login stores its JWT in
+that tab's `sessionStorage`, and internal links/forms carry the tab token so a
+student and landlord can remain signed in independently in separate tabs.
 The listing filter treats an empty Max rent field as no upper bound, allowing
 all feasible listings. The route accepts the browser's empty string submission
 and normalizes it to `None` before filtering. Save and unsave actions now return
@@ -331,15 +334,14 @@ After restarting the live Uvicorn process, `/app?max_rent=` returned the full
 listing set without a validation error, and saving from that filtered page
 returned to `/app?max_rent=` rather than `/app/saved`.
 
-The local polish checkpoint remains in progress until the student re-runs the
-browser flows and confirms these changes against the wireframes. The report
-does not claim a deployment; Phase 6 remains open.
+The local polish checkpoint was followed by the Render deployment. The live
+service health endpoint and sign-in page were checked at the public URL.
 
 ## Deployed app
 
-Phase 6. Public Render URL (not localhost). Deployment has not yet been completed.
+Phase 6. Public Render URL:
 
-https://
+https://faststarter-ygkb.onrender.com
 
 ## Logins
 

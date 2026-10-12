@@ -1,4 +1,4 @@
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi import Request, status, Form
 from app.dependencies import SessionDep
 from . import router, templates
@@ -27,6 +27,8 @@ async def login_action_ajax(
     auth_service = AuthService(user_repo)
     access_token = auth_service.authenticate_user(username, password)
     if not access_token:
+        if "application/json" in request.headers.get("accept", ""):
+            return JSONResponse({"detail": "Incorrect username or password"}, status_code=401)
         flash(request, "Incorrect username or password", "danger")
         return RedirectResponse(
             url=request.url_for("login_view"),
@@ -35,6 +37,8 @@ async def login_action_ajax(
 
     user = user_repo.get_by_username(username)
     dest = "admin_home_view" if user and user.role == "admin" else "user_home_view"
+    if "application/json" in request.headers.get("accept", ""):
+        return JSONResponse({"token": access_token, "destination": request.url_for(dest)})
     response = RedirectResponse(
         url=request.url_for(dest),
         status_code=status.HTTP_303_SEE_OTHER,

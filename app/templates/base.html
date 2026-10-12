@@ -36,6 +36,30 @@
         </div>
     </div>
 
+    <script>
+      (() => {
+        const key = "campusnest_tab_token";
+        const urlToken = new URLSearchParams(window.location.search).get("tab_token");
+        if (urlToken) sessionStorage.setItem(key, urlToken);
+        const token = sessionStorage.getItem(key);
+        if (!token) return;
+        const addToken = (value) => {
+          const url = new URL(value, window.location.origin);
+          if (url.origin !== window.location.origin) return value;
+          url.searchParams.set("tab_token", token);
+          return url.pathname + url.search + url.hash;
+        };
+        document.querySelectorAll("a[href], form[action]").forEach((element) => {
+          const attribute = element.tagName === "FORM" ? "action" : "href";
+          const value = element.getAttribute(attribute);
+          if (value && !value.startsWith("#")) element.setAttribute(attribute, addToken(value));
+        });
+        document.querySelectorAll("a[href*='/logout']").forEach((link) => {
+          link.addEventListener("click", () => sessionStorage.removeItem(key));
+        });
+      })();
+    </script>
+
     {% block external_js %}{% endblock %}
 </body>
 

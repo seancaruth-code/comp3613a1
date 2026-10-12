@@ -8,7 +8,7 @@
     <div class="brand-wordmark">CampusNest</div>
     <p class="auth-tagline">Welcome back. Sign in to your account.</p>
 
-    <form method="POST" action="{{ url_for('login_action_ajax') }}">
+    <form id="login-form" method="POST" action="{{ url_for('login_action_ajax') }}">
       <div class="mb-3">
         <label class="form-label" for="username">Username</label>
         <input class="form-control" type="text" id="username" name="username" required autofocus>
@@ -28,4 +28,25 @@
     {% endfor %}
   </div>
 </div>
+<script>
+  document.getElementById("login-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const response = await fetch(form.action, {
+      method: "POST",
+      body: new FormData(form),
+      headers: { "Accept": "application/json" }
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      const error = document.createElement("div");
+      error.className = "alert alert-danger mb-0";
+      error.textContent = data.detail || "Unable to sign in.";
+      form.parentElement.appendChild(error);
+      return;
+    }
+    sessionStorage.setItem("campusnest_tab_token", data.token);
+    window.location.assign(data.destination + "?tab_token=" + encodeURIComponent(data.token));
+  });
+</script>
 {% endblock %}

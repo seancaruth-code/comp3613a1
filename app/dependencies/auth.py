@@ -13,7 +13,8 @@ async def get_current_user(request:Request, db:SessionDep)->User:
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    token = request.cookies.get("access_token")
+    token = request.query_params.get("tab_token") or request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
+    token = token or request.cookies.get("access_token")
 
     if token is None:
         raise credentials_exception
