@@ -244,12 +244,14 @@
         <form class="save-form" method="post" action="{{ url_for('toggle_saved_listing', listing_id=listing.id) }}">
           <input type="hidden" name="action" value="unsave">
           <input type="hidden" name="return_to" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
+          <input type="hidden" name="tab_token" value="{{ request.query_params.get('tab_token', '') }}">
           <button class="save-btn unsave" type="submit">Saved</button>
         </form>
         {% else %}
         <form class="save-form" method="post" action="{{ url_for('toggle_saved_listing', listing_id=listing.id) }}">
           <input type="hidden" name="action" value="save">
           <input type="hidden" name="return_to" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
+          <input type="hidden" name="tab_token" value="{{ request.query_params.get('tab_token', '') }}">
           <button class="save-btn save" type="submit">Save listing</button>
         </form>
         {% endif %}

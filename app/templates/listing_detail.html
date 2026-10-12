@@ -97,12 +97,14 @@
         <form method="post" action="{{ url_for('toggle_saved_listing', listing_id=listing.id) }}">
           <input type="hidden" name="action" value="unsave">
           <input type="hidden" name="return_to" value="{{ request.url.path }}">
+          <input type="hidden" name="tab_token" value="{{ request.query_params.get('tab_token', '') }}">
           <button class="btn btn-outline-secondary" type="submit">Remove save</button>
         </form>
         {% else %}
         <form method="post" action="{{ url_for('toggle_saved_listing', listing_id=listing.id) }}">
           <input type="hidden" name="action" value="save">
           <input type="hidden" name="return_to" value="{{ request.url.path }}">
+          <input type="hidden" name="tab_token" value="{{ request.query_params.get('tab_token', '') }}">
           <button class="btn btn-primary" type="submit">Save listing</button>
         </form>
         {% endif %}

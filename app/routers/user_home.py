@@ -1,5 +1,5 @@
 from datetime import datetime
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 from fastapi import Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -14,12 +14,25 @@ from app.utilities.flash import flash
 from . import router, templates
 
 
-def _return_url(request: Request, fallback: str, candidate: str | None = None) -> str:
+def _return_url(
+    request: Request,
+    fallback: str,
+    candidate: str | None = None,
+    tab_token: str | None = None,
+) -> str:
+    tab_token = tab_token or request.query_params.get("tab_token")
     for raw_url in (candidate, request.headers.get("referer")):
         if raw_url:
             parsed_url = urlparse(raw_url)
             if not parsed_url.netloc and parsed_url.path.startswith("/") and not raw_url.startswith("//"):
-                return parsed_url.path + (f"?{parsed_url.query}" if parsed_url.query else "")
+                result = parsed_url.path + (f"?{parsed_url.query}" if parsed_url.query else "")
+                if tab_token and "tab_token=" not in result:
+                    result += "&" if "?" in result else "?"
+                    result += f"tab_token={quote(tab_token)}"
+                return result
+    if tab_token and "tab_token=" not in fallback:
+        fallback += "&" if "?" in fallback else "?"
+        fallback += f"tab_token={quote(tab_token)}"
     return fallback
 
 
@@ -162,6 +175,7 @@ async def toggle_saved_listing(
     listing_id: int,
     action: str = Form(...),
     return_to: str | None = Form(None),
+    tab_token: str | None = Form(None),
 ):
     service = ListingService(ListingRepository(db))
     saved = service.toggle_save(user.id, listing_id, action)
@@ -178,6 +192,7 @@ async def toggle_saved_listing(
             request,
             request.url_for("listing_detail_view", listing_id=listing_id),
             return_to,
+            tab_token,
         ),
         status_code=status.HTTP_303_SEE_OTHER,
     )
