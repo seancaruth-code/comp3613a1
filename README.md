@@ -92,8 +92,8 @@ python manage.py init
 
 | Username | Password    | Role         |
 |----------|-------------|--------------|
-| `bob`    | `bobpass`   | regular_user |
-| `admin`  | `adminpass` | admin        |
+| `student`  | `studentpass`  | regular_user |
+| `landlord` | `landlordpass` | admin        |
 
 Flags:
 

@@ -1,0 +1,56 @@
+{
+  "system": "Student Accommodation",
+  "actors": [
+    {
+      "name": "User",
+      "side": "left"
+    },
+    {
+      "name": "Student",
+      "side": "left",
+      "generalizes": [
+        "User"
+      ]
+    },
+    {
+      "name": "Landlord",
+      "side": "right",
+      "generalizes": [
+        "User"
+      ]
+    }
+  ],
+  "use_cases": [
+    {
+      "name": "View and Save Listing",
+      "actors": [
+        "Student",
+        "Landlord"
+      ],
+      "extends": [
+        "Filter Accommodations"
+      ]
+    },
+    {
+      "name": "Request Viewing",
+      "actors": [
+        "Student"
+      ]
+    },
+    {
+      "name": "Accept or Decline Viewing Requests",
+      "actors": [
+        "Landlord"
+      ],
+      "extends": [
+        "Send Message"
+      ]
+    },
+    {
+      "name": "Filter Accommodations"
+    },
+    {
+      "name": "Send Message"
+    }
+  ]
+}

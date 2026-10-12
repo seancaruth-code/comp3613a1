@@ -32,6 +32,7 @@ _ALIAS_RE = re.compile(r"[^A-Za-z0-9]+")
 class Actor:
     name: str
     side: str  # left | right
+    generalizes: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -128,8 +129,8 @@ def to_plantuml(spec: DiagramSpec) -> str:
 
     lines = [
         "@startuml",
-        "!pragma layout smetana",
         "skinparam shadowing false",
+        "skinparam linetype ortho",
         "skinparam actorBorderColor #1B365D",
         "skinparam actorFontColor #1E232D",
         "skinparam usecaseBackgroundColor #FFFFFF",
@@ -161,6 +162,13 @@ def to_plantuml(spec: DiagramSpec) -> str:
             f"actor {_quote(actor.name)} as {aliases[f'actor:{actor.name}']}"
         )
     lines.append("")
+
+    for actor in spec.actors:
+        actor_alias = aliases[f"actor:{actor.name}"]
+        for parent_name in actor.generalizes:
+            parent_alias = aliases.get(f"actor:{parent_name}")
+            if parent_alias:
+                lines.append(f"{actor_alias} --|> {parent_alias}")
 
     actor_side = {actor.name: actor.side for actor in spec.actors}
     for case in spec.use_cases:
@@ -213,6 +221,17 @@ def _parse_actors(raw: object) -> tuple[Actor, ...]:
             unique.append(name)
     if not unique:
         return ()
+    generalizations: dict[str, tuple[str, ...]] = {}
+    for item in raw:
+        if isinstance(item, dict):
+            name = str(item.get("name") or "").strip()
+            parents = item.get("generalizes") or []
+            if isinstance(parents, str):
+                parents = [parents]
+            if isinstance(parents, list):
+                generalizations[name] = tuple(
+                    str(parent).strip() for parent in parents if str(parent).strip()
+                )
     assigned: list[Actor] = []
     for index, name in enumerate(unique):
         if name in sides:
@@ -225,7 +244,13 @@ def _parse_actors(raw: object) -> tuple[Actor, ...]:
             side = "right"
         else:
             side = "left" if index % 2 == 0 else "right"
-        assigned.append(Actor(name=name, side=side))
+        assigned.append(
+            Actor(
+                name=name,
+                side=side,
+                generalizes=generalizations.get(name, ()),
+            )
+        )
     return tuple(assigned)
 
 

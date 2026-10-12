@@ -1,0 +1,145 @@
+{% extends "authenticated-base.html" %}
+{% block title %}{{ listing.title }}{% endblock %}
+
+{% block internal_css %}
+{{ super() }}
+<style>
+    .detail-shell {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 1.5rem;
+    }
+
+    .detail-card,
+    .request-card {
+        background: #fff;
+        border-radius: 1rem;
+        box-shadow: 0 10px 24px rgba(29, 45, 45, 0.08);
+        overflow: hidden;
+    }
+
+    .detail-card img {
+        width: 100%;
+        height: 320px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .detail-body {
+        padding: 1.5rem;
+    }
+
+    .detail-body h1 {
+        font-family: var(--brand-font-display);
+        margin-bottom: 0.5rem;
+    }
+
+    .detail-meta {
+        color: var(--brand-muted);
+        margin-bottom: 1rem;
+    }
+
+    .detail-price {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--brand-accent);
+        margin-bottom: 0.75rem;
+    }
+
+    .request-card {
+        padding: 1.5rem;
+    }
+
+    .request-card h2 {
+        margin-top: 0;
+        font-family: var(--brand-font-display);
+    }
+
+    .request-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .request-actions {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    @media (max-width: 900px) {
+        .detail-shell {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block subpage_content %}
+<div class="detail-shell">
+  <article class="detail-card">
+    <img src="{{ listing.image or 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80' }}" alt="{{ listing.title }}">
+    <div class="detail-body">
+      <div class="d-flex justify-content-between align-items-start gap-3">
+        <div>
+          <h1>{{ listing.title }}</h1>
+          <div class="detail-meta">{{ listing.location }} · {{ listing.bed }} beds · {{ listing.property_type|title }}</div>
+        </div>
+        <span class="status-badge">{{ listing.availability|title }}</span>
+      </div>
+
+      <div class="detail-price">${{ '%.0f'|format(listing.rent) }}/month</div>
+      <p>{{ listing.description }}</p>
+
+      <div class="request-actions mt-3">
+        {% if saved %}
+        <form method="post" action="{{ url_for('toggle_saved_listing', listing_id=listing.id) }}">
+          <input type="hidden" name="action" value="unsave">
+          <input type="hidden" name="return_to" value="{{ request.url.path }}">
+          <button class="btn btn-outline-secondary" type="submit">Remove save</button>
+        </form>
+        {% else %}
+        <form method="post" action="{{ url_for('toggle_saved_listing', listing_id=listing.id) }}">
+          <input type="hidden" name="action" value="save">
+          <input type="hidden" name="return_to" value="{{ request.url.path }}">
+          <button class="btn btn-primary" type="submit">Save listing</button>
+        </form>
+        {% endif %}
+        <a class="btn btn-outline-primary" href="{{ url_for('user_home_view') }}">Back to listings</a>
+      </div>
+    </div>
+  </article>
+
+  {% if user.role != 'admin' %}
+  <aside class="request-card">
+    <h2>Request a viewing</h2>
+    <form class="request-form" method="post" action="{{ url_for('request_viewing', listing_id=listing.id) }}">
+      <div>
+        <label class="form-label" for="view_date">Preferred date</label>
+        <input class="form-control" type="date" id="view_date" name="view_date" required>
+      </div>
+      <div>
+        <label class="form-label" for="view_time">Preferred time</label>
+        <input class="form-control" type="time" id="view_time" name="view_time" required>
+      </div>
+      <div>
+        <label class="form-label" for="comments">Notes</label>
+        <textarea class="form-control" id="comments" name="comments" rows="4" placeholder="Tell the landlord about your move-in goals or questions."></textarea>
+      </div>
+      <button class="btn btn-primary btn-lg" type="submit">Submit request</button>
+    </form>
+  </aside>
+  {% else %}
+  <aside class="request-card">
+    <h2>Landlord view</h2>
+    <p class="text-muted mb-0">Landlords can review viewing requests from the Request tab.</p>
+    <a class="btn btn-primary mt-3" href="{{ url_for('admin_home_view') }}">View requests</a>
+  </aside>
+  {% endif %}
+</div>
+
+{% for message in get_flashed_messages(request) %}
+<div class="alert alert-{{ message.type }} mt-3" role="alert">{{ message.message }}</div>
+{% endfor %}
+{% endblock %}

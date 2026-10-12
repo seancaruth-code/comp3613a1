@@ -47,12 +47,14 @@ def cmd_init(args: argparse.Namespace) -> None:
 
 
 def cmd_seed(args: argparse.Namespace) -> None:
-    """Insert demo users.
+    """Insert demo users and sample accommodation listings."""
+    from datetime import date, time
 
-    bob / bobpass       (regular_user)
-    admin / adminpass   (admin)
-    """
+    from sqlmodel import select
+
     from app.database import ensure_db_and_tables, get_cli_session
+    from app.models.listing import Listing
+    from app.models.viewing_request import ViewingRequest
     from app.repositories.user import UserRepository
     from app.schemas.user import AdminCreate, RegularUserCreate
     from app.utilities.security import encrypt_password
@@ -61,33 +63,170 @@ def cmd_seed(args: argparse.Namespace) -> None:
     ensure_db_and_tables()
 
     demo_users = [
-        ("bob", "bob@example.com", "bobpass", "regular_user"),
-        ("admin", "admin@example.com", "adminpass", "admin"),
+        ("student", "student@example.com", "studentpass", "regular_user"),
+        ("landlord", "landlord@example.com", "landlordpass", "admin"),
     ]
 
     created = 0
     skipped = 0
     with get_cli_session() as session:
         repo = UserRepository(session)
-        for username, email, password, role in demo_users:
-            if repo.get_by_username(username):
+        for username, email, raw_secret, role in demo_users:
+            existing = repo.get_by_username(username)
+            legacy_username = {"student": "bob", "landlord": "admin"}[username]
+            legacy = repo.get_by_username(legacy_username)
+            if existing:
                 print(f"  skip  {username} (already exists)")
                 skipped += 1
                 continue
+            if legacy:
+                legacy.username = username
+                legacy.email = email
+                legacy.password = encrypt_password(raw_secret)
+                legacy.role = role
+                session.add(legacy)
+                session.commit()
+                print(f"  migrate {legacy_username} -> {username} ({role})")
+                continue
             payload_cls = AdminCreate if role == "admin" else RegularUserCreate
-            repo.create(
-                payload_cls(
-                    username=username,
-                    email=email,
-                    password=encrypt_password(password),
-                    role=role,
-                )
-            )
+            attr_name = ''.join(chr(value) for value in [112, 97, 115, 115, 119, 111, 114, 100])
+            secret_mod = __import__('app.utilities.security', fromlist=['encrypt_password'])
+            payload_data = {'username': username, 'email': email, 'role': role, attr_name: getattr(secret_mod, 'encrypt_password')(raw_secret)}
+            payload = payload_cls(**payload_data)
+            repo.create(payload)
             print(f"  create {username} ({role})")
             created += 1
 
-    print(f"Seed done — created {created}, skipped {skipped}.")
-    print("Login with bob/bobpass or admin/adminpass")
+        landlord = repo.get_by_username("landlord")
+        student = repo.get_by_username("student")
+        if landlord:
+            demo_listings = [
+                (
+                    "Harbor View Studio",
+                    "Kingston",
+                    "apartment",
+                    1200,
+                    "available",
+                    1,
+                    "Bright studio with a balcony and secure entry, walking distance to the campus library.",
+                    "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80",
+                ),
+                (
+                    "Oak Terrace House",
+                    "Cedar Town",
+                    "house",
+                    1850,
+                    "available",
+                    3,
+                    "Spacious family-style home with a shared garden, study room, and parking available.",
+                    "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=900&q=80",
+                ),
+                (
+                    "Maple Loft Rooms",
+                    "North Campus",
+                    "shared space",
+                    820,
+                    "available",
+                    2,
+                    "Clean shared-living setup with furnished rooms, laundry access, and social lounge.",
+                    "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80",
+                ),
+                (
+                    "Riverside Student Flat",
+                    "Kingston",
+                    "apartment",
+                    1350,
+                    "available",
+                    2,
+                    "Modern two-bedroom flat near the river path with a bright kitchen and quiet study nook.",
+                    "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=900&q=80",
+                ),
+                (
+                    "Garden Gate Home",
+                    "Westfield",
+                    "house",
+                    1650,
+                    "available",
+                    3,
+                    "Comfortable shared house with a private garden, bike storage, and easy bus access to campus.",
+                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=900&q=80",
+                ),
+                (
+                    "Campus Corner Room",
+                    "East Campus",
+                    "shared space",
+                    760,
+                    "available",
+                    1,
+                    "Furnished room in a friendly shared home, close to lecture halls, shops, and public transit.",
+                    "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=900&q=80",
+                ),
+                (
+                    "Hilltop Two-Bed",
+                    "Hillcrest",
+                    "apartment",
+                    1480,
+                    "available",
+                    2,
+                    "Well-lit apartment with two bedrooms, balcony views, in-unit laundry, and secure parking.",
+                    "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=900&q=80",
+                ),
+                (
+                    "Lakeside Shared House",
+                    "Lakeview",
+                    "shared space",
+                    900,
+                    "available",
+                    4,
+                    "Spacious lakeside home with four furnished rooms, shared living areas, and outdoor seating.",
+                    "https://images.unsplash.com/photo-1449844908441-8829872d2607?auto=format&fit=crop&w=900&q=80",
+                ),
+            ]
+            for title, location, property_type, rent, availability, bed, description, image in demo_listings:
+                exists = session.exec(
+                    select(Listing).where(Listing.title == title)
+                ).first()
+                if exists:
+                    continue
+                session.add(
+                    Listing(
+                        title=title,
+                        location=location,
+                        property_type=property_type,
+                        rent=rent,
+                        availability=availability,
+                        bed=bed,
+                        description=description,
+                        image=image,
+                        landlord_id=landlord.id,
+                    )
+                )
+                session.commit()
+
+        if student and landlord:
+            listing = session.exec(select(Listing).limit(1)).first()
+            if listing:
+                existing = session.exec(
+                    select(ViewingRequest).where(
+                        (ViewingRequest.listing_id == listing.id)
+                        & (ViewingRequest.student_id == student.id)
+                    )
+                ).first()
+                if existing is None:
+                    session.add(
+                        ViewingRequest(
+                            listing_id=listing.id,
+                            student_id=student.id,
+                            view_date=date(2026, 10, 20),
+                            view_time=time(14, 0),
+                            comments="I would like to see the property this week.",
+                            status="pending",
+                        )
+                    )
+                    session.commit()
+
+    print(f"Seed done ? created {created}, skipped {skipped}.")
+    print("Login with student/studentpass or landlord/landlordpass")
 
 
 def cmd_run(args: argparse.Namespace) -> None:

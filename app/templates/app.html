@@ -1,9 +1,267 @@
 {% extends "authenticated-base.html" %}
-{% block title %}Home{% endblock %}
+{% block title %}CampusNest | Listings{% endblock %}
+
+{% block internal_css %}
+{{ super() }}
+<style>
+    .listings-page {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .page-header h1 {
+        margin: 0;
+        font-family: var(--brand-font-display);
+        color: var(--brand-ink);
+    }
+
+    .saved-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.45rem 0.8rem;
+        border-radius: 999px;
+        background: rgba(58, 114, 102, 0.12);
+        color: var(--brand-accent-2);
+        font-weight: 700;
+    }
+
+    .filter-card {
+        background: #fff;
+        border-radius: 1rem;
+        padding: 1rem;
+        box-shadow: 0 10px 24px rgba(29, 45, 45, 0.08);
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr auto;
+        gap: 0.75rem;
+        align-items: end;
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: end;
+    }
+
+    .listing-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1.25rem;
+    }
+
+    .listing-card {
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 10px 24px rgba(29, 45, 45, 0.08);
+        border: 1px solid rgba(29, 45, 45, 0.06);
+    }
+
+    .listing-card img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .listing-body {
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .listing-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+
+    .listing-header h3 {
+        font-size: 1.1rem;
+        margin: 0;
+        font-weight: 700;
+    }
+
+    .listing-price {
+        white-space: nowrap;
+        font-weight: 700;
+        color: var(--brand-accent);
+    }
+
+    .listing-meta {
+        margin: 0;
+        color: var(--brand-muted);
+        font-size: 0.9rem;
+    }
+
+    .listing-description {
+        margin: 0;
+        color: var(--brand-ink);
+        line-height: 1.5;
+        flex: 1;
+    }
+
+    .listing-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 0.25rem;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.4rem 0.7rem;
+        border-radius: 999px;
+        background: rgba(209, 125, 70, 0.12);
+        color: var(--brand-accent);
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    .save-form {
+        margin: 0;
+    }
+
+    .save-btn {
+        border: none;
+        border-radius: 999px;
+        padding: 0.55rem 0.9rem;
+        font-weight: 600;
+    }
+
+    .save-btn.save {
+        background: var(--brand-accent-2);
+        color: white;
+    }
+
+    .save-btn.unsave {
+        background: #f1efe9;
+        color: var(--brand-ink);
+    }
+
+    .empty-state {
+        background: #fff;
+        border-radius: 1rem;
+        box-shadow: 0 10px 24px rgba(29, 45, 45, 0.08);
+        padding: 1.25rem;
+        color: var(--brand-muted);
+    }
+
+    @media (max-width: 768px) {
+        .filter-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block subpage_content %}
-<div class="container-fluid py-2">
-  <h1 class="h4 mb-2">Home</h1>
-  <p class="text-muted mb-0">Workflow screens replace this shell in Phase 5 implement.</p>
+<div class="listings-page">
+  <div class="page-header">
+    <div>
+      <h1>Find your next home</h1>
+      <p class="text-muted mb-0">
+        {% if saved_only %}Your saved accommodation shortlist.{% else %}Browse accommodation options and save the listings you want to revisit.{% endif %}
+      </p>
+    </div>
+    <span class="saved-pill">Saved: {{ saved_count }}</span>
+  </div>
+
+  <div class="filter-card">
+    <form method="get" action="{{ url_for('user_home_view') }}">
+      <div class="filter-grid">
+        <div>
+          <label class="form-label" for="search">Search</label>
+          <input class="form-control" id="search" name="search" value="{{ search }}" placeholder="Location, title, or keyword">
+        </div>
+        <div>
+          <label class="form-label" for="property_type">Property type</label>
+          <select class="form-select" id="property_type" name="property_type">
+            <option value="">All homes</option>
+            <option value="apartment" {% if property_type == 'apartment' %}selected{% endif %}>Apartment</option>
+            <option value="house" {% if property_type == 'house' %}selected{% endif %}>House</option>
+            <option value="shared space" {% if property_type == 'shared space' %}selected{% endif %}>Shared space</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" for="max_rent">Max rent</label>
+          <input class="form-control" id="max_rent" name="max_rent" type="number" min="0" step="50" value="{{ max_rent or '' }}" placeholder="Any">
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-primary" type="submit">Apply filters</button>
+          <a class="btn btn-outline-secondary" href="{{ url_for('user_home_view') }}">Reset</a>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  {% if saved_only %}
+  <div class="d-flex justify-content-between align-items-center">
+    <h2 class="h5 mb-0">Saved listings</h2>
+    <a href="{{ url_for('user_home_view') }}" class="btn btn-sm btn-outline-secondary">All listings</a>
+  </div>
+  {% endif %}
+  {% if listings %}
+  <div class="listing-grid" id="saved-listings">
+    {% for listing in listings %}
+    <article class="listing-card">
+      <img src="{{ listing.image or 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80' }}" alt="{{ listing.title }}">
+      <div class="listing-body">
+        <div class="listing-header">
+          <h3>{{ listing.title }}</h3>
+          <span class="listing-price">${{ '%.0f'|format(listing.rent) }}/mo</span>
+        </div>
+
+        <p class="listing-meta">{{ listing.location }} · {{ listing.bed }} bed · {{ listing.property_type|title }}</p>
+        <p class="listing-description">{{ listing.description }}</p>
+
+        <div class="request-actions">
+          <a class="btn btn-outline-primary" href="{{ url_for('listing_detail_view', listing_id=listing.id) }}">View details</a>
+        </div>
+
+        <div class="listing-actions">
+        <span class="status-badge">{{ listing.availability|title }}</span>
+
+        {% if listing.id in saved_ids %}
+        <form class="save-form" method="post" action="{{ url_for('toggle_saved_listing', listing_id=listing.id) }}">
+          <input type="hidden" name="action" value="unsave">
+          <input type="hidden" name="return_to" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
+          <button class="save-btn unsave" type="submit">Saved</button>
+        </form>
+        {% else %}
+        <form class="save-form" method="post" action="{{ url_for('toggle_saved_listing', listing_id=listing.id) }}">
+          <input type="hidden" name="action" value="save">
+          <input type="hidden" name="return_to" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
+          <button class="save-btn save" type="submit">Save listing</button>
+        </form>
+        {% endif %}
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    No listings match your current filters. Try adjusting the search or rent cap.
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

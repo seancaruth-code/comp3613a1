@@ -42,6 +42,7 @@
         font-size: 1.25rem;
         text-align: center;
         margin: 1rem 0 1.5rem;
+        font-family: var(--brand-font-display);
     }
 
     #content {
@@ -63,19 +64,31 @@
 {% block content %}
 <div id="wrapper">
     <nav id="sidebar" class="p-3 d-flex flex-column vh-100">
-        <div class="brand-wordmark">FastStarter</div>
+        <div class="brand-wordmark">CampusNest</div>
 
         <ul class="nav nav-pills flex-column gap-2 flex-grow-1">
             <li class="nav-item">
-                <a class="nav-link d-flex align-items-center {{ 'active' if request.url.path.startswith('/app') }}"
+                <a class="nav-link d-flex align-items-center {{ 'active' if (request.url.path == '/app' or request.url.path.startswith('/app/listings/')) and request.query_params.get('saved_only') != 'true' }}"
                    href="{{ url_for('user_home_view') }}">
-                    <span class="material-symbols-outlined me-2">home</span>
                     Home
+                </a>
+            </li>
+            {% if user.role == 'admin' %}
+            <li class="nav-item">
+                <a class="nav-link d-flex align-items-center {{ 'active' if request.url.path == '/admin' }}"
+                   href="{{ url_for('admin_home_view') }}">
+                    Request
+                </a>
+            </li>
+            {% endif %}
+            <li class="nav-item">
+                <a class="nav-link d-flex align-items-center {{ 'active' if request.url.path == '/app/saved' or request.query_params.get('saved_only') == 'true' }}"
+                   href="{{ url_for('saved_listings_view') }}">
+                    Saved
                 </a>
             </li>
             <li class="nav-item mt-auto">
                 <a class="nav-link d-flex align-items-center text-danger" href="{{ url_for('logout') }}">
-                    <span class="material-symbols-outlined me-2">logout</span>
                     Logout
                 </a>
             </li>
