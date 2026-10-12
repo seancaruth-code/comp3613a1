@@ -323,6 +323,9 @@ sidebar tab now displays only its text label.
 Authentication was updated for per-tab testing: each login stores its JWT in
 that tab's `sessionStorage`, and internal links/forms carry the tab token so a
 student and landlord can remain signed in independently in separate tabs.
+The login response uses an explicit tab-login JSON handshake and serializes the
+destination URL as text, avoiding the redirect/JSON parsing failure during
+per-tab sign-in.
 The listing filter treats an empty Max rent field as no upper bound, allowing
 all feasible listings. The route accepts the browser's empty string submission
 and normalizes it to `None` before filtering. Save and unsave actions now return
