@@ -334,6 +334,8 @@ current page URL does not visibly include `tab_token`.
 Authenticated POST forms now use the tab token in an Authorization header and
 follow redirects through the same tab token, avoiding browser form-submission
 cookie/query inconsistencies.
+The client now follows the POST normally and uses the final response URL,
+instead of relying on redirect headers exposed by a manual fetch redirect.
 The listing filter treats an empty Max rent field as no upper bound, allowing
 all feasible listings. The route accepts the browser's empty string submission
 and normalizes it to `None` before filtering. Save and unsave actions now return

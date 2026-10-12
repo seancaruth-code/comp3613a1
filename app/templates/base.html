@@ -63,17 +63,13 @@
             const response = await fetch(form.action, {
               method: "POST",
               body: new FormData(form),
-              redirect: "manual",
               headers: { "Authorization": `Bearer ${token}` }
             });
-            if (response.status >= 300 && response.status < 400) {
-              const location = response.headers.get("Location");
-              if (location) {
-                const next = new URL(location, window.location.origin);
-                next.searchParams.set("tab_token", token);
-                window.location.assign(next.pathname + next.search + next.hash);
-                return;
-              }
+            if (response.ok) {
+              const next = new URL(response.url, window.location.origin);
+              next.searchParams.set("tab_token", token);
+              window.location.assign(next.pathname + next.search + next.hash);
+              return;
             }
             window.location.reload();
           });
