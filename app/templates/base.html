@@ -66,7 +66,8 @@
               headers: { "Authorization": `Bearer ${token}` }
             });
             if (response.ok) {
-              const next = new URL(response.url, window.location.origin);
+              const returnTo = form.elements.return_to?.value || response.url;
+              const next = new URL(returnTo, window.location.origin);
               next.searchParams.set("tab_token", token);
               window.location.assign(next.pathname + next.search + next.hash);
               return;
