@@ -57,6 +57,27 @@
         document.querySelectorAll("form input[name='tab_token']").forEach((input) => {
           input.value = token;
         });
+        document.querySelectorAll("form[method='post'], form[method='POST']").forEach((form) => {
+          form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const response = await fetch(form.action, {
+              method: "POST",
+              body: new FormData(form),
+              redirect: "manual",
+              headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (response.status >= 300 && response.status < 400) {
+              const location = response.headers.get("Location");
+              if (location) {
+                const next = new URL(location, window.location.origin);
+                next.searchParams.set("tab_token", token);
+                window.location.assign(next.pathname + next.search + next.hash);
+                return;
+              }
+            }
+            window.location.reload();
+          });
+        });
         document.querySelectorAll("a[href*='/logout']").forEach((link) => {
           link.addEventListener("click", () => sessionStorage.removeItem(key));
         });
