@@ -328,6 +328,9 @@ destination URL as text, avoiding the redirect/JSON parsing failure during
 per-tab sign-in.
 Save/unsave redirects now preserve the active tab token, preventing the
 listing-details save action from landing on the expired-session page.
+Save forms also submit the token explicitly and the shared page script fills it
+from `sessionStorage`, so the redirect remains authenticated even when the
+current page URL does not visibly include `tab_token`.
 The listing filter treats an empty Max rent field as no upper bound, allowing
 all feasible listings. The route accepts the browser's empty string submission
 and normalizes it to `None` before filtering. Save and unsave actions now return

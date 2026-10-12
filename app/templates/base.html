@@ -54,6 +54,9 @@
           const value = element.getAttribute(attribute);
           if (value && !value.startsWith("#")) element.setAttribute(attribute, addToken(value));
         });
+        document.querySelectorAll("form input[name='tab_token']").forEach((input) => {
+          input.value = token;
+        });
         document.querySelectorAll("a[href*='/logout']").forEach((link) => {
           link.addEventListener("click", () => sessionStorage.removeItem(key));
         });
