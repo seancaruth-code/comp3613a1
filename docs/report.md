@@ -339,6 +339,8 @@ instead of relying on redirect headers exposed by a manual fetch redirect.
 For save forms, the client now navigates directly to the submitted `return_to`
 path and appends the active tab token, ensuring the successful save does not
 leave the user on an expired-session page.
+Save and unsave now use a tab-authenticated JSON response and update the
+button in place without navigation, so the listing page remains open.
 The listing filter treats an empty Max rent field as no upper bound, allowing
 all feasible listings. The route accepts the browser's empty string submission
 and normalizes it to `None` before filtering. Save and unsave actions now return

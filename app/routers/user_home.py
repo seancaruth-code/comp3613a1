@@ -2,7 +2,7 @@ from datetime import datetime
 from urllib.parse import quote, urlparse
 
 from fastapi import Form, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from app.dependencies.auth import AuthDep
 from app.dependencies.session import SessionDep
@@ -186,6 +186,14 @@ async def toggle_saved_listing(
         flash(request, "This listing is already in your shortlist.", "info")
     else:
         flash(request, "Listing removed from your shortlist.", "info")
+
+    if request.headers.get("x-tab-request") == "save":
+        message = (
+            "Listing saved to your shortlist."
+            if saved and action.lower() == "save"
+            else "Listing removed from your shortlist."
+        )
+        return JSONResponse({"saved": saved, "message": message})
 
     return RedirectResponse(
         url=_return_url(
