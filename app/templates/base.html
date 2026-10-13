@@ -60,8 +60,9 @@
         document.querySelectorAll("form[method='post'], form[method='POST']").forEach((form) => {
           form.addEventListener("submit", async (event) => {
             event.preventDefault();
-            const isSaveForm = form.action.includes("/app/save/");
-            const response = await fetch(form.action, {
+            const formAction = form.getAttribute("action");
+            const isSaveForm = formAction.includes("/app/save/");
+            const response = await fetch(formAction, {
               method: "POST",
               body: new FormData(form),
               headers: {
